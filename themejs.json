@@ -1,0 +1,9 @@
+[
+	"src/assets/angular/angular.js",
+	  "src/assets/angular-sanitize/angular-sanitize.js",
+	  "src/assets/angular-animate/angular-animate.js",
+	  "src/assets/angular-aria/angular-aria.js", 
+	  "src/assets/angular-material/angular-material.js", 
+	  "src/assets/angular-route/angular-route.min.js", 
+	  "src/assets/jquery/dist/jquery.js"
+]
