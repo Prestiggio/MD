@@ -4,6 +4,7 @@ namespace Ry\Md\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
+use Ry\Md\Console\Commands\Colon;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -51,6 +52,10 @@ class RyServiceProvider extends ServiceProvider
      */
     public function register()
     {
+    	$this->app->singleton("rymd:colonize", function(){
+    		return new Colon();
+    	});    	
+    	$this->commands(["rymd:colonize"]);
     }
     public function map()
     {    	
