@@ -12,7 +12,7 @@ class Colon extends Command
      *
      * @var string
      */
-    protected $signature = 'rymd:colonize {destination}';
+    protected $name = 'rymd:colonize {destination}';
 
     /**
      * The console command description.
