@@ -9,7 +9,7 @@
 @show
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link type="text/css" href="{{url("vendor/rymd/css/style.min.css")}}" rel="stylesheet">
-@yield("script")
+@yield("basescript")
 </head>
 <body>
 @yield("body")

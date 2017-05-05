@@ -9,7 +9,7 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @stop
 
-@section("script")
+@section("basescript")
 <script type="text/javascript" src="{{url("vendor/rymd/js/script.min.js")}}"></script>
 <script type="application/ld+json" id="conf">
 {!!$js!!}
@@ -17,8 +17,13 @@
 <script type="text/javascript">
 (function(window, angular, $, gameApp, undefined){
 
-	angular.module("appPublic", ["gameApp"]);
+	angular.module("appPublic", ["ngApp"]);
 	
-})(window, window.angular, window.jQuery, window.gameApp);
+})(window, window.angular, window.jQuery, window.appApp);
 </script>
+@yield("script")
+@stop
+
+@section("body")
+@yield("main")
 @stop

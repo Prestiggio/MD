@@ -1,0 +1,11 @@
+<md-toolbar class="md-primary toolbar">
+	<md-fab-actions class="md-toolbar-tools hide-gt-sm" layout-align="space-between center">
+ 		<md-button aria-label="{{firstitem.title}}" href="{{firstitem.link}}" title="{{firstitem.title}}">{{firstitem.title}}</md-button>
+      	<md-button aria-label="comment" class="md-icon-button md-primary" ng-click="open()">
+      		<md-icon md-svg-src="/vendor/rymd/img/menu.svg"></md-icon>
+      	</md-button>
+	</md-fab-actions>
+	<div class="md-toolbar-tools hide-sm hide-xs">
+		<md-button ng-repeat="item in menuitems" aria-label="{{item.name}}" href="{{item.href}}" title="{{item.title}}">{{item.name}}</md-button>
+	</div>
+</md-toolbar>

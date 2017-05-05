@@ -5,6 +5,7 @@ namespace Ry\Md\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 use Ry\Md\Console\Commands\Colon;
+use Illuminate\Support\Facades\View;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -23,10 +24,10 @@ class RyServiceProvider extends ServiceProvider
     	$this->mergeConfigFrom(
 	        	__DIR__.'/../config/rymd.php', 'rymd'
 	    );
+	    */
     	$this->publishes([
-    			__DIR__.'/../assets' => public_path('vendor/rymd'),
-    	], "public");    	
-    	*/
+    			__DIR__.'/../assets/templates' => public_path('vendor/rymd'),
+    	], "templates");
     	//ressources
     	$this->loadViewsFrom(__DIR__.'/../ressources/views', 'rymd');
     	$this->loadTranslationsFrom(__DIR__.'/../ressources/lang', 'rymd');
@@ -43,6 +44,10 @@ class RyServiceProvider extends ServiceProvider
     	$this->map();
     	//$kernel = $this->app['Illuminate\Contracts\Http\Kernel'];
     	//$kernel->pushMiddleware('Ry\Facebook\Http\Middleware\Facebook');
+    	
+    	$this->app['router']->middleware('recaptcha', '\Ry\Md\Http\Middleware\Recaptcha');
+    	
+    	View::share("js", json_encode(["app" => "blank", "captcha" => env("captcha")]));
     }
 
     /**
