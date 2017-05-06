@@ -99,6 +99,7 @@
 		};
 		
 		$("script[type='application/dialog']").each(function(){
+			var isModal = $(this).data("modal");
 			$routeProvider.when($(this).data("href"), {
 		        template : $(this).text(),
 		        controller : ["$scope", "$mdDialog", "$http", "$timeout", "$appSetup", "$routeParams", "$location", "$compile", 
@@ -132,7 +133,7 @@
 					    		
 					    	}],
 					    	template: '<md-dialog ng-view style="overflow: visible; " md-theme="default" class="popupview"></md-dialog>',
-					    	clickOutsideToClose:false
+					    	clickOutsideToClose:!isModal
 					    });
 		        		popupservice.show();
 		        		return $app.popup;
@@ -200,11 +201,13 @@
 					e.preventDefault();
 					$app.popup = null;
 					target.html('<div style="text-align: center; width: 100%;"><img src="/medias/console/images/chargement.gif" class="img-responsive"/></div>');
-					$templateRequest($(element).attr("href")).then(function(data){
-						var template = angular.element(data);
-						target.html(template);
-						$compile(template)(scope);
-					});
+					if($(element).attr("href")!=null) {
+						$templateRequest($(element).attr("href")).then(function(data){
+							var template = angular.element(data);
+							target.html(template);
+							$compile(template)(scope);
+						});
+					}
 				});
 			}
 		};
@@ -214,6 +217,9 @@
 			restrict : 'E',
 			transclude : true,
 			link : function(scope, element, attrs, ctrl, transclude){
+				if(!$app.template.body)
+					return;
+				
 				$templateRequest($app.template.body).then(function (data) {
                 	var template = angular.element(data);
                 	transclude(function(clone, scope2){
@@ -247,7 +253,7 @@
         				}
 
         				angular.forEach($app.template, function(v, k){
-        					if(k!="body" && k!="header nav" && v!=null) {
+        					if(k!="body" && k!="header nav" && v!=null && $app.template[k]!=null) {
         						$templateRequest($app.template[k]).then(function (data) {
                                     var template = angular.element(data);
                                     $(k).replaceWith(template);
@@ -267,11 +273,13 @@
         					var kscope = k.match(/(\w+)\.?\w*$/)[1];
         					scope2[kscope] = $app.data[k];
         					
-        					$templateRequest($("#"+k).prop("src")).then(function (data) {
-                                var template = angular.element(data);
-                                $("#"+k).replaceWith(template);
-                                $compile(template)(scope2);
-                            });
+        					if($("#"+k).prop("src")!=null) {
+        						$templateRequest($("#"+k).prop("src")).then(function (data) {
+                                    var template = angular.element(data);
+                                    $("#"+k).replaceWith(template);
+                                    $compile(template)(scope2);
+                                });
+        					}
         				}
         				
         				$("script[type='application/popup']").each(function(){
