@@ -451,7 +451,8 @@
 						grecaptcha.render($(elem)[0], {
 							sitekey:$app.data.conf.captcha,
 							callback:function(response){
-								$http.defaults.headers.common.captcha = response;
+								$app.captcha = response;
+								$http.defaults.headers.common.captcha = $app.captcha;
 								def.resolve("valid");
 							},
 							'expired-callback':function(){
