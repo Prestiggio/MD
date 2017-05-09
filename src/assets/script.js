@@ -100,7 +100,8 @@
 		
 		$("script[type='application/dialog']").each(function(){
 			var isModal = $(this).data("modal");
-			$routeProvider.when($(this).data("href"), {
+			var href = $(this).data("href");
+			$routeProvider.when(href, {
 		        template : $(this).text(),
 		        controller : ["$scope", "$mdDialog", "$http", "$timeout", "$appSetup", "$routeParams", "$location", "$compile", 
 		                      "$interval", "$localStorage", "$sessionStorage", "$filter", "FileUploader",
@@ -133,7 +134,8 @@
 					    		
 					    	}],
 					    	template: '<md-dialog ng-view style="overflow: visible; " md-theme="default" class="popupview"></md-dialog>',
-					    	clickOutsideToClose:!isModal
+					    	clickOutsideToClose:!isModal,
+					    	href: href
 					    });
 		        		popupservice.show();
 		        		return $app.popup;
@@ -171,6 +173,13 @@
 					
 					if(!$app.popup)
 						$app.popup = $q.defer();
+					
+					var href = dialogOptions.href;
+					delete dialogOptions.href;
+					
+					dialogOptions.onRemoving = function(){
+						$app.onDialogRemove(href);
+					};
 					
 					this.displaying = true;
 					

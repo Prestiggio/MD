@@ -1,6 +1,6 @@
 <?php namespace Ry\Md\Http\Middleware;
 
-use Closure;
+use Closure, Session;
 
 class Recaptcha {
 
@@ -25,8 +25,9 @@ class Recaptcha {
 			$response = curl_exec($ch);
 			curl_close($ch);
 			$json = json_decode($response);
-			if(isset($json->success) && $json->success==true)
+			if(isset($json->success) && $json->success==true) {
 				return $next($request);
+			}
 		}
 		
 		return redirect()->back();
