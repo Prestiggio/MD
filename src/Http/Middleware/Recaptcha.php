@@ -1,6 +1,6 @@
 <?php namespace Ry\Md\Http\Middleware;
 
-use Closure, Session;
+use Closure, Session, Hash;
 
 class Recaptcha {
 
@@ -13,6 +13,10 @@ class Recaptcha {
 	 */
 	public function handle($request, Closure $next)
 	{
+		if(Session::has("captcha") && Hash::check($request->header("captcha", "nada"), Session::get("captcha"))) {
+			return $next($request);
+		}
+		
 		if($captcha = $request->header("captcha", false)) {
 			$ch = curl_init("https://www.google.com/recaptcha/api/siteverify");
 			curl_setopt($ch, CURLOPT_POST, true);
@@ -26,6 +30,7 @@ class Recaptcha {
 			curl_close($ch);
 			$json = json_decode($response);
 			if(isset($json->success) && $json->success==true) {
+				Session::put("captcha", bcrypt($captcha));
 				return $next($request);
 			}
 		}
