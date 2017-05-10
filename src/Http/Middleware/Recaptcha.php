@@ -27,6 +27,9 @@ class Recaptcha {
 			]);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			$response = curl_exec($ch);
+			if(!$response)
+				return $next($request);
+				
 			curl_close($ch);
 			$json = json_decode($response);
 			if(isset($json->success) && $json->success==true) {
