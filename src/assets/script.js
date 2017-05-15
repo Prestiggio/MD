@@ -1,6 +1,9 @@
 (function(window, angular, $, undefined){
 	
 	var AppService = function(data, template){
+		var injections = ["$scope", "$mdDialog", "$http", "$timeout", "$appSetup", "$routeParams", "$location", "$compile", 
+			              "$interval", "$mdSidenav", "$log", "$interpolate", "$localStorage", "$sessionStorage", "$filter", "FileUploader",
+			              ];
 		this.urls = {
 			upload : "/upload.php"
 		};
@@ -26,6 +29,27 @@
 		this.setUploadAuto = function(auto){
 			this.uploader.autoUpload = auto;
 		};
+		this.remap = function(arg, func){
+			var newarg = arg;
+			if(func && func.$inject) {
+				newarg = [];
+				angular.forEach(func.$inject, function(v, k){
+					var i = injections.indexOf(v);
+					newarg.push(arg[i]);
+				});
+			}			
+			return newarg;
+		};
+		this.reinject = function(func){
+			if(func && func.$inject) {
+				angular.forEach(func.$inject, function(v, k){
+					if(injections.indexOf(v)<0) {
+						injections.push(v);
+					}
+				});
+			}
+			return injections;
+		}
 		this.initUploader = function(uploader){
 			if(!this.uploader) {
 				var app = this;
@@ -41,16 +65,7 @@
 						fn : function(item){
 							return item.type.startsWith("image/") || item.type.startsWith("video/");
 						}
-					}],
-					onCompleteItem: function(item, response){
-						app.upload.onDone(item, response);
-					},
-					onAfterAddingFile: function(item){
-						app.upload.onQueue(item);
-					},
-					onCancelItem: function(item){
-						app.upload.onCancel(item);
-					}
+					}]
 				});
 			}
 		};
@@ -97,16 +112,15 @@
 			    palette: params.browser ? params.browser : "blue"
 			});
 		};
-		
-		$("script[type='application/dialog']").each(function(){
-			var isModal = $(this).data("modal");
-			var href = $(this).data("href");
-			$routeProvider.when(href, {
-		        template : $(this).text(),
-		        controller : ["$scope", "$mdDialog", "$http", "$timeout", "$appSetup", "$routeParams", "$location", "$compile", 
-		                      "$interval", "$localStorage", "$sessionStorage", "$filter", "FileUploader",
-		                      function($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, 
-		                    		  $interval, $localStorage, $sessionStorage, $filter, FileUploader){
+
+		this.$get = function(){
+			var app = new AppService(this.data, this.templates);
+			
+			$("script[type='application/dialog']").each(function(){
+				var isModal = $(this).data("modal");
+				var href = $(this).data("href");
+				var controller = function($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, 
+	          		  $interval, $localStorage, $sessionStorage, $filter, FileUploader){
 		        	$app.initUploader(FileUploader);
 		        	$scope.uploader = $app.uploader;
 		        	$http.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
@@ -116,36 +130,39 @@
 							$scope.$storage = $localStorage;
 						else
 							$scope.$storage = $sessionStorage;
-		        		main($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, $interval);
+		        		main.apply(window, $app.remap(arguments, main));
 		        	}
 		        	catch(e) {
 		        		console.log("implement main($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, $interval);", e);
 		        	}
 		        	
-		        }],
-		        resolve : {
-		        	popup : ["popupservice", "$appSetup", function(popupservice, $app){
-		        		$app.queueDialog({
-					    	controller: ["$scope", "$mdDialog", function($scope, $mdDialog){
-					    		
-					    		$scope.cancel = function(){
-					    			$mdDialog.hide();
-					    		};
-					    		
-					    	}],
-					    	template: '<md-dialog ng-view style="overflow: visible; " md-theme="default" class="popupview"></md-dialog>',
-					    	clickOutsideToClose:!isModal,
-					    	href: href
-					    });
-		        		popupservice.show();
-		        		return $app.popup;
-		        	}]
-		        }
-		    });
-		});
-
-		this.$get = function(){
-			return new AppService(this.data, this.templates);
+		        };
+		        controller.$inject = app.reinject(main);
+				$routeProvider.when(href, {
+			        template : $(this).text(),
+			        controller : controller,
+			        resolve : {
+			        	popup : ["popupservice", "$appSetup", function(popupservice, $app){
+			        		$app.queueDialog({
+						    	controller: ["$scope", "$mdDialog", function($scope, $mdDialog){
+						    		
+						    		$scope.cancel = function(){
+						    			$mdDialog.hide();
+						    		};
+						    		
+						    	}],
+						    	template: '<md-dialog ng-view style="overflow: visible; " md-theme="default" class="popupview"></md-dialog>',
+						    	clickOutsideToClose:!isModal,
+						    	href: href
+						    });
+			        		popupservice.show();
+			        		return $app.popup;
+			        	}]
+			        }
+			    });
+			});
+			
+			return app;
 		};
 		
 	}]).factory("popupservice", ["$mdDialog", "$appSetup", "$q", function($mdDialog, $app, $q){
@@ -222,6 +239,46 @@
 		};
 		
 	}]).directive("body", ["$route", "$templateRequest", "$compile", "$appSetup", "$timeout", "$mdDialog", "popupservice", function($route, $templateRequest, $compile, $app, $timeout, $mdDialog, popupservice){
+		var controller = function($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, 
+      		  $interval, $mdSidenav, $log, $interpolate, $localStorage, $sessionStorage, $filter, FileUploader){
+			
+			$app.initUploader(FileUploader);
+			$scope.uploader = $app.uploader;
+			if($app.data.conf.message) {
+				alert($app.data.conf.message);
+			}
+			
+			$scope.open = function(){
+				$mdSidenav('left').open().then(function(){
+					
+				});
+			};
+			
+			$scope.close = function () {
+			   $mdSidenav('left').close()
+			   .then(function () {
+			       
+			   });
+			};
+			
+			for(var k in $app.data) {	
+				$scope[k] = $app.data[k];
+			}
+			
+			$http.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
+			$http.defaults.headers.common["X-CSRF-TOKEN"] = $('meta[name="csrf-token"]').attr('content');
+			try {
+				if($app.storage==1)
+					$scope.$storage = $localStorage;
+				else
+					$scope.$storage = $sessionStorage;
+				main.apply(window, $app.remap(arguments, main));
+			}
+			catch(e){
+				console.log("implement main($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, $interval)", e);
+			}	
+		};
+		controller.$inject = $app.reinject(main);
 		return {
 			restrict : 'E',
 			transclude : true,
@@ -330,47 +387,7 @@
                 });
 				
 			},
-			controller : ["$scope", "$timeout", "$mdSidenav", "$log", "$mdDialog", "$interpolate", "$appSetup", "$location", "$http", "$routeParams", "$compile", 
-			              "$interval", "$localStorage", "$sessionStorage", "$filter", "FileUploader",
-			              function($scope, $timeout, $mdSidenav, $log, $mdDialog, $interpolate, $app, $location, $http, $routeParams, $compile, 
-			            		  $interval, $localStorage, $sessionStorage, $filter, FileUploader){
-				
-				$app.initUploader(FileUploader);
-				$scope.uploader = $app.uploader;
-				if($app.data.conf.message) {
-					alert($app.data.conf.message);
-				}
-				
-				$scope.open = function(){
-					$mdSidenav('left').open().then(function(){
-						
-					});
-				};
-				
-				$scope.close = function () {
-				   $mdSidenav('left').close()
-				   .then(function () {
-				       
-				   });
-				};
-				
-				for(var k in $app.data) {	
-					$scope[k] = $app.data[k];
-				}
-				
-				$http.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
-				$http.defaults.headers.common["X-CSRF-TOKEN"] = $('meta[name="csrf-token"]').attr('content');
-				try {
-					if($app.storage==1)
-						$scope.$storage = $localStorage;
-					else
-						$scope.$storage = $sessionStorage;
-					main($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, $interval);
-				}
-				catch(e){
-					console.log("implement main($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, $interval)", e);
-				}	
-			}]
+			controller : controller
 		};
 	}]).directive("validateCode", ["$q", "$http", function($q, $http){
 		return {
