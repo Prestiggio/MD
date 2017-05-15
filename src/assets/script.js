@@ -536,15 +536,17 @@
 			return input;
 		}
 	}]).filter('compact', ["FileItem", function(FileItem){
-		return function(input){
+		return function(input, upload){
 			angular.forEach(input, function(v, k){
 				angular.forEach(input[k].item.additionalProperty, function(v2, k2){
 					input[k].item[v2.name] = v2.value;
 				});
 				delete input[k].item.additionalProperty;
-				input[k].item.uploader = {
-					formData : [input[k].item]
-				};
+				if(upload) {
+					input[k].item.uploader = {
+						formData : [input[k].item]
+					};
+				}
 			});
 			return input;
 		};
