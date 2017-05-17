@@ -2,7 +2,9 @@
 @section("html")
 <html ng-app="appPublic" ng-strict-di>
 @show
+@section("head")
 <head>
+@show
 <meta charset="utf-8" />
 @section("meta")
 <title>Ry Material Design Angular Js</title>

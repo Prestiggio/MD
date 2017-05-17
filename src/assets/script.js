@@ -514,7 +514,7 @@
 		};
 	}).filter('x', ["$filter", function($filter){
 		return function(input, key) {
-			return $filter("filter")(input.item.additionalProperty, {name:key})[0].value;
+			return $filter("filter")(input.additionalProperty, {name:key})[0].value;
 		}
 	}]).filter('pagination', ["$appSetup", function($app){
 		$app.currentPage = 1;
@@ -537,17 +537,30 @@
 		}
 	}]).filter('compact', ["FileItem", function(FileItem){
 		return function(input, upload){
-			angular.forEach(input, function(v, k){
-				angular.forEach(input[k].item.additionalProperty, function(v2, k2){
-					input[k].item[v2.name] = v2.value;
+			if(!input["@context"]) {
+				angular.forEach(input, function(v, k){
+					angular.forEach(input[k].item.additionalProperty, function(v2, k2){
+						input[k].item[v2.name] = v2.value;
+					});
+					delete input[k].item.additionalProperty;
+					if(upload) {
+						input[k].item.uploader = {
+							formData : [input[k].item]
+						};
+					}
 				});
-				delete input[k].item.additionalProperty;
+			}
+			else {
+				angular.forEach(input.additionalProperty, function(v2, k2){
+					input[v2.name] = v2.value;
+				});
+				delete input.additionalProperty;
 				if(upload) {
-					input[k].item.uploader = {
-						formData : [input[k].item]
+					input.uploader = {
+						formData : [input]
 					};
 				}
-			});
+			}
 			return input;
 		};
 	}]);
