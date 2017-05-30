@@ -332,57 +332,81 @@
         				toplogo.removeClass("hide-xs");
         				$("md-sidenav").prepend(toplogo);
         				
-        				for(var k in $app.data) {
-        					if(k=="conf")
-        						continue;
+        				var appdata = angular.copy($app.data);
+        				
+        				var ldjsonize = function(){
+        					var k = false;
+        					for(k in appdata) {
+        						break;
+        					}
+        					if(!k) {
+        						popupize();
+        						return;
+        					}
+        					
+        					if(k=="conf"){
+        						delete appdata[k];
+        						ldjsonize();
+        						return;
+        					}
         					
         					var kscope = k.match(/(\w+)\.?\w*$/)[1];
-        					scope2[kscope] = $app.data[k];
+        					scope2[kscope] = appdata[k];
         					
         					if($("#"+k).prop("src")!=null) {
         						$templateRequest($("#"+k).prop("src")).then(function (data) {
                                     var template = angular.element(data);
                                     $("#"+k).replaceWith(template);
                                     $compile(template)(scope2);
+                                    delete appdata[k];
+                                    ldjsonize();
                                 });
         					}
-        				}
-        				
-        				$("script[type='application/popup']").each(function(){
-        					var text = $(this).text();
-        					var isModal = $(this).attr("modal") ? true : false;
-        					var controller = $(this).attr("id");
-        					if(!controller)
-        						controller = $(this).attr("controller");
-        					var delay = $(this).attr("delay");
-        					scope2[controller] = function(){
-        						$app.queueDialog({
-        		        	    	controller: ["$scope", "$mdDialog", "$http", "$timeout", "$appSetup", "$location", "data", function($scope, $mdDialog, $http, $timeout, $app, $location, data){
-        		        	    		
-        		        	    		$scope.cancel = function(){
-        		        	    			$mdDialog.hide();
-        		        	    		};
-        		        	    		
-        		        	    		window[controller]($scope, $mdDialog, $http, $timeout, $app, $location, data);
-        		        	    		
-        		        	    	}],
-        		        	    	template: text,
-        		        	    	clickOutsideToClose:!isModal,
-        		        	    	locals:{
-        		        	    		data : arguments.length > 0 ? arguments[0] : null
-        		        	    	}
-        		        	    });
-        						popupservice.show();
-    						};
-        					if(delay) {
-        						$timeout(function(){
-        							scope2[controller]();
-            		    		}, delay);
+        					else {
+        						delete appdata[k];
+        						ldjsonize();
         					}
-        		        });
+        				};
         				
-        				popupservice.bootstrapped = true;
-						popupservice.show();
+        				var popupize = function(){
+        					$("script[type='application/popup']").each(function(){
+            					var text = $(this).text();
+            					var isModal = $(this).attr("modal") ? true : false;
+            					var controller = $(this).attr("id");
+            					if(!controller)
+            						controller = $(this).attr("controller");
+            					var delay = $(this).attr("delay");
+            					scope2[controller] = function(){
+            						$app.queueDialog({
+            		        	    	controller: ["$scope", "$mdDialog", "$http", "$timeout", "$appSetup", "$location", "data", function($scope, $mdDialog, $http, $timeout, $app, $location, data){
+            		        	    		
+            		        	    		$scope.cancel = function(){
+            		        	    			$mdDialog.hide();
+            		        	    		};
+            		        	    		
+            		        	    		window[controller]($scope, $mdDialog, $http, $timeout, $app, $location, data);
+            		        	    		
+            		        	    	}],
+            		        	    	template: text,
+            		        	    	clickOutsideToClose:!isModal,
+            		        	    	locals:{
+            		        	    		data : arguments.length > 0 ? arguments[0] : null
+            		        	    	}
+            		        	    });
+            						popupservice.show();
+        						};
+            					if(delay) {
+            						$timeout(function(){
+            							scope2[controller]();
+                		    		}, delay);
+            					}
+            		        });
+            				
+            				popupservice.bootstrapped = true;
+    						popupservice.show();
+        				};
+        				
+        				ldjsonize();
                     });
                 });
 				
@@ -447,6 +471,22 @@
 			link : function(scope, elm, attrs, ctrl){
 				ctrl.$validators.confirmed = function(modelValue, viewValue){
 					if(viewValue && scope.user.password != viewValue)
+						return false;
+					
+					return true;
+				};
+			}
+		};
+	}).directive("matchModel", function(){
+		return {
+			require : "ngModel",
+			restrict : "AC",
+			scope : {
+				matchModel : "=matchModel"
+			},
+			link : function(scope, elm, attrs, ctrl){
+				ctrl.$validators.matchModel = function(modelValue, viewValue){
+					if(viewValue && scope.matchModel != viewValue)
 						return false;
 					
 					return true;

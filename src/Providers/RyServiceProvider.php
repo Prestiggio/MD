@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 use Ry\Md\Console\Commands\Colon;
 use Illuminate\Support\Facades\View;
+use Ry\Md\Models\Search;
 
 class RyServiceProvider extends ServiceProvider
 {
@@ -59,7 +60,10 @@ class RyServiceProvider extends ServiceProvider
     {
     	$this->app->singleton("rymd:colonize", function(){
     		return new Colon();
-    	});    	
+    	});
+    	$this->app->singleton("rymd.search", function(){
+    		return new Search();
+    	});
     	$this->commands(["rymd:colonize"]);
     }
     public function map()
