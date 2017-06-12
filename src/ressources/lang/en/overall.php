@@ -2,8 +2,8 @@
 return [
 	"welcome" => "Bienvenue",
 	"keywords" => "Application facebook",
-	"description" => "Description par défaut",
-	"social_login" => "S'inscrire",
-	"first" => "Début",
-	"last" => "Dernier"
+	"description" => "Defauly description",
+	"social_login" => "Subscribe",
+	"first" => "First",
+	"last" => "Last"
 ];
