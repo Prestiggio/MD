@@ -1,3 +1,4 @@
 [
-	"src/assets/angular-material/angular-material.min.css"
+	"src/assets/angular-material/angular-material.min.css",
+	"src/assets/style.css"
 ]

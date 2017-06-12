@@ -3,7 +3,8 @@
 	var AppService = function(data, template){
 		var injections = ["$scope", "$mdDialog", "$http", "$timeout", "$appSetup", "$routeParams", "$location", "$compile", 
 			              "$interval", "$mdSidenav", "$log", "$interpolate", "$localStorage", "$sessionStorage", "$filter", "FileUploader",
-			              ];
+			             ];
+		this.loaded = [];
 		this.urls = {
 			upload : "/upload.php"
 		};
@@ -165,6 +166,73 @@
 			return app;
 		};
 		
+	}]).service("$ga", ["$appSetup", function($app){
+		if($app.data.conf.ga) {
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+				  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+				  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+				  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+				  ga('create', $app.data.conf.ga, 'auto');
+				  ga('send', 'pageview');
+				  if($app.data.auth)
+					  ga('set', 'userId', $app.data.auth.id);
+		}
+	}]).factory("$ry", ["$appSetup", "$templateRequest", "$q", "$compile", "$ga", function($app, $templateRequest, $q, $compile, $ga){
+		
+		return {
+			layout : function(scope){
+				var deferred = $q.defer();
+				
+				var appdata = angular.copy($app.data);
+				
+				var dis = this;
+				
+				var ldjsonize = function(){
+					var k = false;
+					for(k in appdata) {
+						if($app.loaded.indexOf(k)>=0)
+							continue;
+						break;
+					}
+					
+					if(!k) {
+						deferred.resolve();
+						return;
+					}
+					
+					if(k=="conf" || k=="auth"){
+						delete appdata[k];
+						ldjsonize();
+						return;
+					}
+					
+					var kscope = k.match(/(\w+)\.?\w*$/)[1];
+					scope[kscope] = appdata[k];
+					
+					if($("#"+k).prop("src")!=null) {
+						$templateRequest($("#"+k).prop("src")).then(function (data) {
+		                    var template = angular.element(data);
+		                    $("#"+k).replaceWith(template);
+		                    $compile(template)(scope);
+		                    $app.loaded.push(k);
+		                    delete appdata[k];
+		                    ldjsonize();
+		                });
+					}
+					else {
+						$app.loaded.push(k);
+						delete appdata[k];
+						ldjsonize();
+					}
+				};
+				
+				ldjsonize();
+				
+				return deferred.promise;
+			}
+		};	
+		
 	}]).factory("popupservice", ["$mdDialog", "$appSetup", "$q", function($mdDialog, $app, $q){
 		
 		var gu = function(){
@@ -218,6 +286,111 @@
 		
 		return new gu();
 		
+	}]).directive("rytree", ["$compile", "$appSetup", function($compile, $app){
+
+		if($app.rytreeTempId==null)
+			$app.rytreeTempId = 9999999;
+		
+		return {
+			restrict : 'A',
+			scope : {
+				children : "=children"
+			},
+			link : function(scope, elem, attr, ctrl){
+				var ul = $($("#"+attr.src).text());
+				$(elem).append(ul);
+				$compile(ul)(scope);
+			},
+			controller : ["$scope", "$appSetup", function($scope, $app){
+				$scope.addChild = function(parent){
+					$app.rytreeTempId++;
+					parent.children.push({tempid:$app.rytreeTempId,children:[]});
+				};
+				$scope.hasChild = function(value){
+					return angular.isObject(value) || angular.isArray(value);
+				};
+				$scope.isLink = function(value){
+					if(value==undefined)
+						return false;
+					
+					return value.toString().startsWith("http://") || value.toString().startsWith("https://");
+				};
+			}]
+		};
+	}]).directive("treeCheck", function(){
+		return {
+			restrict : "CA",
+			controller : ["$scope", function($scope){
+				$scope.toggle = function(data){
+					angular.forEach(data.children, function(item){
+						item.selected = data.selected;
+						$scope.toggle(item);
+					});
+				};
+			}]
+		};
+	}).directive("affix", function(){
+		return {
+			restrict : "C",
+			link : function(scope, elem){
+				$("body").on("scroll", function(){
+					$(elem).toggleClass("affixed", $(elem).parent().offset().top <= 0);
+				});
+			}
+		};
+	}).filter('pagination', ["$appSetup", function($app){
+		$app.currentPage = 1;
+		return function(input, lastpage) {
+			lastpage = parseInt(lastpage);
+			var ecart = 3;
+			var begin = $app.currentPage - ecart;
+			if(begin<=0)
+				begin = 1;
+			var end = $app.currentPage + ecart;
+			if(end>lastpage)
+				end = lastpage;
+			if(end<=begin)
+				return [];
+			
+			for(var i=begin; i<end; i++) {
+				input.push(i);
+			}
+			return input;
+		}
+	}]).directive("paginate", ["$compile", "$templateRequest", function($compile, $templateRequest){
+		return {
+			restrict : "E",
+			require : 'ngModel',
+			scope : {
+				data : "=ngModel",
+				ngPaginate : "=ngPaginate"
+			},
+			link : function(scope, elem, attr, ngModel){
+				scope.first = attr.first;
+				scope.last = attr.last;
+				$templateRequest(attr.src).then(function(data){
+					var template = angular.element(data);
+                    $(elem).replaceWith(template);
+            		$compile(template)(scope);
+				});
+			}
+		};
+	}]).directive("ryEdit", ["$compile", "$templateRequest", function($compile, $templateRequest){
+		return {
+			restrict : "E",
+			require : 'ngModel',
+			scope : {
+				main : "=main",
+				data : "=ngModel"
+			},
+			link : function(scope, elem, attr, ngModel){
+				$templateRequest(attr.src).then(function(data){
+					var template = angular.element(data);
+                    $(elem).replaceWith(template);
+            		$compile(template)(scope);
+				});
+			}
+		};
 	}]).directive("popuptarget", ["$templateRequest", "$compile", "$appSetup", function($templateRequest, $compile, $app){
 		
 		return {
@@ -238,7 +411,8 @@
 			}
 		};
 		
-	}]).directive("body", ["$route", "$templateRequest", "$compile", "$appSetup", "$timeout", "$mdDialog", "popupservice", function($route, $templateRequest, $compile, $app, $timeout, $mdDialog, popupservice){
+	}]).directive("body", ["$route", "$templateRequest", "$compile", "$appSetup", "$timeout", "$mdDialog", "popupservice", "$ry",
+	                       function($route, $templateRequest, $compile, $app, $timeout, $mdDialog, popupservice, $ry){
 		var controller = function($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, 
       		  $interval, $mdSidenav, $log, $interpolate, $localStorage, $sessionStorage, $filter, FileUploader){
 			
@@ -332,43 +506,7 @@
         				toplogo.removeClass("hide-xs");
         				$("md-sidenav").prepend(toplogo);
         				
-        				var appdata = angular.copy($app.data);
-        				
-        				var ldjsonize = function(){
-        					var k = false;
-        					for(k in appdata) {
-        						break;
-        					}
-        					if(!k) {
-        						popupize();
-        						return;
-        					}
-        					
-        					if(k=="conf"){
-        						delete appdata[k];
-        						ldjsonize();
-        						return;
-        					}
-        					
-        					var kscope = k.match(/(\w+)\.?\w*$/)[1];
-        					scope2[kscope] = appdata[k];
-        					
-        					if($("#"+k).prop("src")!=null) {
-        						$templateRequest($("#"+k).prop("src")).then(function (data) {
-                                    var template = angular.element(data);
-                                    $("#"+k).replaceWith(template);
-                                    $compile(template)(scope2);
-                                    delete appdata[k];
-                                    ldjsonize();
-                                });
-        					}
-        					else {
-        						delete appdata[k];
-        						ldjsonize();
-        					}
-        				};
-        				
-        				var popupize = function(){
+        				$ry.layout(scope2).then(function(){
         					$("script[type='application/popup']").each(function(){
             					var text = $(this).text();
             					var isModal = $(this).attr("modal") ? true : false;
@@ -404,9 +542,7 @@
             				
             				popupservice.bootstrapped = true;
     						popupservice.show();
-        				};
-        				
-        				ldjsonize();
+        				});
                     });
                 });
 				

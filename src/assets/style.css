@@ -1,0 +1,12 @@
+[rytree] ul {
+	list-style-type: none;
+	margin: 0 0 0 35px;
+}
+.affix {
+	width: 48vw;
+}
+.affixed {
+	 position: fixed; 
+	 top: 0;
+	 max-height: 100vh;
+}
