@@ -2,33 +2,17 @@
 	
 	var AppService = function(data, template){
 		var injections = ["$scope", "$mdDialog", "$http", "$timeout", "$appSetup", "$routeParams", "$location", "$compile", 
-			              "$interval", "$mdSidenav", "$log", "$interpolate", "$localStorage", "$sessionStorage", "$filter", "FileUploader",
+			              "$interval", "$mdSidenav", "$log", "$interpolate", "$localStorage", "$sessionStorage", "$filter",
 			             ];
 		this.loaded = [];
-		this.urls = {
-			upload : "/upload.php"
-		};
 		this.storage = 1; //local 2-session
 		this.template = template;
 		this.data = data;
-		if(this.data.conf.urls && this.data.conf.urls.upload)
-			this.urls.upload = this.data.conf.urls.upload;
 		this.popup = false;
 		this.menuitems = [];
 		this.dialogs = [];
 		this.queueDialog = function(dialogOptions){
 			this.dialogs.push(dialogOptions);
-		};
-		this.upload = {
-			onDone : function(item, response){},
-			onQueue : function(item){},
-			onCancel : function(item){}
-		};
-		this.setUploadEndpoint = function(url){
-			this.uploader.url = url;
-		};
-		this.setUploadAuto = function(auto){
-			this.uploader.autoUpload = auto;
 		};
 		this.remap = function(arg, func){
 			var newarg = arg;
@@ -51,28 +35,9 @@
 			}
 			return injections;
 		}
-		this.initUploader = function(uploader){
-			if(!this.uploader) {
-				var app = this;
-				this.uploader = new uploader({
-					url : this.urls.upload,
-					headers : {
-						"X-CSRF-TOKEN" : $('meta[name="csrf-token"]').attr('content')
-					},
-					alias: "file",
-					removeAfterUpload: false,
-					filters: [{
-						name : "allmedias",
-						fn : function(item){
-							return item.type.startsWith("image/") || item.type.startsWith("video/");
-						}
-					}]
-				});
-			}
-		};
 	};
 	
-	angular.module("ngApp", ["ngMaterial", "ngRoute", "ngSanitize", "ngMessages", "ngStorage", "angularFileUpload"])
+	angular.module("ngApp", ["ngMaterial", "ngRoute", "ngSanitize", "ngMessages", "ngStorage"])
 	.provider("$appSetup", ["$mdThemingProvider", "$routeProvider", "$locationProvider", function $appSetupProvider($mdThemingProvider, $routeProvider, $locationProvider){
 
 		this.data = {};
@@ -121,9 +86,7 @@
 				var isModal = $(this).data("modal");
 				var href = $(this).data("href");
 				var controller = function($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, 
-	          		  $interval, $localStorage, $sessionStorage, $filter, FileUploader){
-		        	$app.initUploader(FileUploader);
-		        	$scope.uploader = $app.uploader;
+	          		  $interval, $localStorage, $sessionStorage, $filter){
 		        	$http.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
 		        	$http.defaults.headers.common["X-CSRF-TOKEN"] = $('meta[name="csrf-token"]').attr('content');
 		        	try {
@@ -414,10 +377,7 @@
 	}]).directive("body", ["$route", "$templateRequest", "$compile", "$appSetup", "$timeout", "$mdDialog", "popupservice", "$ry",
 	                       function($route, $templateRequest, $compile, $app, $timeout, $mdDialog, popupservice, $ry){
 		var controller = function($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, 
-      		  $interval, $mdSidenav, $log, $interpolate, $localStorage, $sessionStorage, $filter, FileUploader){
-			
-			$app.initUploader(FileUploader);
-			$scope.uploader = $app.uploader;
+      		  $interval, $mdSidenav, $log, $interpolate, $localStorage, $sessionStorage, $filter){
 			if($app.data.conf.message) {
 				alert($app.data.conf.message);
 			}
@@ -549,20 +509,6 @@
 			},
 			controller : controller
 		};
-	}]).directive("validateCode", ["$q", "$http", function($q, $http){
-		return {
-			require : 'ngModel',
-			link: function(scope, elm, attrs, ctrl) {
-				
-				ctrl.$validators.validateCode = function(modelValue, viewValue){
-					if(viewValue && viewValue.length>4 && viewValue.length<=10)
-						return true;
-
-					return false;
-				};
-
-			}
-		};
 	}]).directive("emailcheck", ["$q", "$http", function($q, $http){
 		return {
 			require : "ngModel",
@@ -600,20 +546,7 @@
 				
 			}
 		};
-	}]).directive("confirmed", function(){
-		return {
-			require : "ngModel",
-			restrict : "AC",
-			link : function(scope, elm, attrs, ctrl){
-				ctrl.$validators.confirmed = function(modelValue, viewValue){
-					if(viewValue && scope.user.password != viewValue)
-						return false;
-					
-					return true;
-				};
-			}
-		};
-	}).directive("matchModel", function(){
+	}]).directive("matchModel", function(){
 		return {
 			require : "ngModel",
 			restrict : "AC",
@@ -669,61 +602,18 @@
 				};				
 			}
 		};
-	}]).directive('ngThumb', function(){
-		return {
-			restrict: 'A',
-            link: function(scope, element, attributes) {
-            	var fileItem = scope.$eval(attributes.ngThumb);
-            	
-            	var reader = new FileReader();
-				
-				reader.onloadstart = reader.onprogress = function(){
-					$(element).attr("src", "/vendor/rymd/img/ring.svg");			
-				};
-				
-				reader.onload = function(e) {
-					$(element).attr("src", e.target.result);
-				};
-				
-				reader.readAsDataURL(fileItem._file);
-            }
-		};
-	}).filter('x', ["$filter", function($filter){
+	}]).filter('x', ["$filter", function($filter){
 		return function(input, key) {
 			return $filter("filter")(input.additionalProperty, {name:key})[0].value;
 		}
-	}]).filter('pagination', ["$appSetup", function($app){
-		$app.currentPage = 1;
-		return function(input, lastpage) {
-			lastpage = parseInt(lastpage);
-			var ecart = 3;
-			var begin = $app.currentPage - ecart;
-			if(begin<=0)
-				begin = 1;
-			var end = $app.currentPage + ecart;
-			if(end>lastpage)
-				end = lastpage;
-			if(end<=begin)
-				return [];
-			
-			for(var i=begin; i<=end; i++) {
-				input.push(i);
-			}
-			return input;
-		}
-	}]).filter('compact', ["FileItem", function(FileItem){
-		return function(input, upload){
+	}]).filter('compact', function(){
+		return function(input){
 			if(!input["@context"]) {
 				angular.forEach(input, function(v, k){
 					angular.forEach(input[k].item.additionalProperty, function(v2, k2){
 						input[k].item[v2.name] = v2.value;
 					});
 					delete input[k].item.additionalProperty;
-					if(upload) {
-						input[k].item.uploader = {
-							formData : [input[k].item]
-						};
-					}
 				});
 			}
 			else {
@@ -731,15 +621,10 @@
 					input[v2.name] = v2.value;
 				});
 				delete input.additionalProperty;
-				if(upload) {
-					input.uploader = {
-						formData : [input]
-					};
-				}
 			}
 			return input;
 		};
-	}]);
+	});
 	
 })(window, window.angular, window.jQuery);
 
