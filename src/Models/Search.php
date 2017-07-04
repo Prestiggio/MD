@@ -1,6 +1,8 @@
 <?php
 namespace Ry\Md\Models;
 
+use Illuminate\Support\Facades\Log;
+
 class Search
 {
 	private $pools = [];
@@ -14,6 +16,9 @@ class Search
 			return [];
 		}
 		
+		if(strlen($q)<2)
+			return [];
+		
 		$results = [];
 		$entities = $this->pools[$pool];
 		$q = preg_replace(["/n[\s\n\t]*'[\s\n\t]*ny?/i", "/[\s\t'-\.,:\/]/i"], " ", trim($q));
@@ -22,12 +27,14 @@ class Search
 			return strlen($item)>2;
 		});
 		foreach($entities as $c => $fields) {
-			$results[] = call_user_func([$c, "where"], function($query) use ($ar, $fields){
-				foreach ($ar as $a) {
-					foreach($fields as $f)
-						$query->orWhereRaw("soundex_match_all(?, ".$f.", ' ') > 0", [$a]);
-				}
-			})->orderBy("id", "DESC")->get();
+			if(count($fields)>0) {
+				$results[] = call_user_func([$c, "where"], function($query) use ($ar, $fields){
+					foreach ($ar as $a) {
+						foreach($fields as $f)
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", ' ') > 0", [$a]);
+					}
+				})->orderBy("id", "DESC")->get();
+			}
 		}
 		return $results;
 	}
