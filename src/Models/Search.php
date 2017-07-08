@@ -30,10 +30,28 @@ class Search
 			if(count($fields)>0) {
 				$results[] = call_user_func([$c, "where"], function($query) use ($ar, $fields){
 					foreach ($ar as $a) {
+						foreach($fields as $f) {
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", ' ') > 0", [$a]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '-') > 0", [$a]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", ',') > 0", [$a]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '\'') > 0", [$a]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '\"') > 0", [$a]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '.') > 0", [$a]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", ';') > 0", [$a]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '+') > 0", [$a]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", ':') > 0", [$a]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '/') > 0", [$a]);
+						}
+					}
+				})->orderBy("id", "DESC")->get();
+				/*
+				Log::info(call_user_func([$c, "where"], function($query) use ($ar, $fields){
+					foreach ($ar as $a) {
 						foreach($fields as $f)
 							$query->orWhereRaw("soundex_match_all(?, ".$f.", ' ') > 0", [$a]);
 					}
-				})->orderBy("id", "DESC")->get();
+				})->orderBy("id", "DESC")->toSql());
+				*/
 			}
 		}
 		return $results;

@@ -110,6 +110,10 @@ trait StructuredData
 		
 		if($this->collectionName=="")
 			$this->collectionName = ":n " . $this->table;
+		
+		if(!$this->structured)
+			return parent::newCollection($models);
+		
 		return new StructuredCollection($models, $this->collectionName, $this->structured);
 	}
 	
