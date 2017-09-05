@@ -1,23 +1,19 @@
-<?php namespace Ry\Md\Http\Middleware;
+<?php
+namespace Ry\Md;
 
-use Closure, Session, Hash;
+use Illuminate\Http\Request;
+use Session, Hash;
 
-class Recaptcha {
-
-	/**
-	 * Handle an incoming request.
-	 *
-	 * @param  \Illuminate\Http\Request  $request
-	 * @param  \Closure  $next
-	 * @return mixed
-	 */
-	public function handle($request, Closure $next)
-	{
+class Recaptcha
+{
+	public static function check(Request $request) {
 		if(Session::has("captcha") && Hash::check($request->header("captcha", "nada"), Session::get("captcha"))) {
-			return $next($request);
+			return true;
 		}
 		
-		if($captcha = $request->header("captcha", false)) {
+		$captcha = $request->header("captcha", false);
+		
+		if($captcha) {
 			$ch = curl_init("https://www.google.com/recaptcha/api/siteverify");
 			curl_setopt($ch, CURLOPT_POST, true);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, [
@@ -28,21 +24,16 @@ class Recaptcha {
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			$response = curl_exec($ch);
 			if(!$response)
-				return $next($request);
-				
+				return true;
+		
 			curl_close($ch);
 			$json = json_decode($response);
 			if(isset($json->success) && $json->success==true) {
 				Session::put("captcha", bcrypt($captcha));
-				return $next($request);
+				return true;
 			}
 		}
 		
-		if($request->ajax()) {
-			return response()->json(["error" =>  ["message" =>  trans("rymd::auth.captcha")]], 403);
-		}
-		
-		return redirect()->back();
+		abort(403);
 	}
-
 }

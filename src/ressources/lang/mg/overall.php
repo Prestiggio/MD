@@ -10,5 +10,7 @@ return [
 		"pending" => "Mahandrasa kelikely fa eo-ampikarakarana ny momba anao izahay",
 		"back" => "Miverina",
 		"reset" => "Diovina ny fanoratana",
-		"save" => "Ampielezina"
+		"save" => "Ampielezina",
+		"login" => "Tontolo mpikambana",
+		"validate" => "Ampiharina"
 ];

@@ -7,5 +7,6 @@ return [
 		"repassword" => "Avereno ny teny miafina",
 		"reset" => "Hanolo teny miafina",
 		"reset_link" => "Andefaso email hanovana teny miafina",
-		"dashboard" => "Jery ankapobeny"
+		"dashboard" => "Jery ankapobeny",
+		"captcha" => "Tsy hay hoe sao dia robot ary ianao"
 ];

@@ -1,5 +1,5 @@
 <md-content layout="row" layout-align="center center">
-	<form class="md-whiteframe-2dp md-padding" name="frm_register" novalidate flex-lg="33" flex-md="33" ng-submit="register()">
+	<form class="md-whiteframe-2dp md-padding" name="frm_register" novalidate flex-lg="33" flex-md="33" ng-submit="frm_register.$valid && register()">
          <div class="text-center md-headline">@lang("rymd::auth.register")</div>
          <md-input-container class="md-block">
          	<label>@lang("rymd::auth.name")</label>
@@ -46,6 +46,7 @@
          	</div>
          </md-input-container>
          <div layout="column">
+         	<div captcha ng-model="userdata.captcha"></div>
          	<md-button type="submit" class="md-raised md-accent" flex>@lang("rymd::auth.register")</md-button>
          </div>
     </form>

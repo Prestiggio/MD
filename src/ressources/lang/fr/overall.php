@@ -10,5 +10,6 @@ return [
 		"pending" => "Veuillez attendre un instant qu'on valide vos données",
 		"back" => "Retour",
 		"reset" => "Réinitialiser tout",
-		"save" => "Enregistrer"
+		"save" => "Enregistrer",
+		"validate" => "Valider"
 ];

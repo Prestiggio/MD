@@ -11,7 +11,7 @@ class Search
 		$this->pools[$domain] = $entities;
 	}
 	
-	public function search($pool, $q) {
+	public function search($pool, $q, $selections=["id"]) {
 		if(!isset($this->pools[$pool])) {
 			return [];
 		}
@@ -31,19 +31,19 @@ class Search
 				$results[] = call_user_func([$c, "where"], function($query) use ($ar, $fields){
 					foreach ($ar as $a) {
 						foreach($fields as $f) {
-							$query->orWhereRaw("soundex_match_all(?, ".$f.", ' ') > 0", [$a]);
-							$query->orWhereRaw("soundex_match_all(?, ".$f.", '-') > 0", [$a]);
-							$query->orWhereRaw("soundex_match_all(?, ".$f.", ',') > 0", [$a]);
-							$query->orWhereRaw("soundex_match_all(?, ".$f.", '\'') > 0", [$a]);
-							$query->orWhereRaw("soundex_match_all(?, ".$f.", '\"') > 0", [$a]);
-							$query->orWhereRaw("soundex_match_all(?, ".$f.", '.') > 0", [$a]);
-							$query->orWhereRaw("soundex_match_all(?, ".$f.", ';') > 0", [$a]);
-							$query->orWhereRaw("soundex_match_all(?, ".$f.", '+') > 0", [$a]);
-							$query->orWhereRaw("soundex_match_all(?, ".$f.", ':') > 0", [$a]);
-							$query->orWhereRaw("soundex_match_all(?, ".$f.", '/') > 0", [$a]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", ' ') > 0", [strtoupper($a)]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '-') > 0", [strtoupper($a)]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", ',') > 0", [strtoupper($a)]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '\'') > 0", [strtoupper($a)]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '\"') > 0", [strtoupper($a)]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '.') > 0", [strtoupper($a)]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", ';') > 0", [strtoupper($a)]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '+') > 0", [strtoupper($a)]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", ':') > 0", [strtoupper($a)]);
+							$query->orWhereRaw("soundex_match_all(?, ".$f.", '/') > 0", [strtoupper($a)]);
 						}
 					}
-				})->orderBy("id", "DESC")->get();
+				})->orderBy("id", "DESC")->select($selections)->get();
 				/*
 				Log::info(call_user_func([$c, "where"], function($query) use ($ar, $fields){
 					foreach ($ar as $a) {

@@ -1,5 +1,5 @@
 <md-content>
-	<form name="frm_" action="{{ url('/login') }}" novalidate>
+	<form name="frm_login" action="{{ url('/login') }}" novalidate>
          
 
                         <div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">

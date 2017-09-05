@@ -8,6 +8,5 @@
 	  "src/assets/angular-messages/angular-messages.min.js", 
 	  "src/assets/angular-file-upload/dist/angular-file-upload.min.js",
 	  "src/assets/angular-material/angular-material.min.js",
-	  "src/assets/jquery/dist/jquery.js",
-	  "src/assets/script.js"
+	  "src/assets/jquery/dist/jquery.js"
 ]
