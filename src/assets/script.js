@@ -1,6 +1,6 @@
 (function(window, angular, $, undefined){
 	
-	var AppService = function(data, template){
+	var AppService = function(data, template, $routeProvider){
 		var injections = ["$scope", "$mdDialog", "$http", "$timeout", "$appSetup", "$routeParams", "$location", "$compile", 
 			              "$interval", "$mdSidenav", "$log", "$interpolate", "$localStorage", "$sessionStorage", "$filter",
 			             ];
@@ -8,9 +8,11 @@
 		this.storage = 1; //local 2-session
 		this.template = template;
 		this.data = data;
+		this.lock = false;
 		this.popup = false;
 		this.menuitems = [];
 		this.dialogs = [];
+		this.actions = {};
 		this.queueDialog = function(dialogOptions){
 			this.dialogs.push(dialogOptions);
 		};
@@ -34,12 +36,52 @@
 				});
 			}
 			return injections;
-		}
+		};
+		this.when = function(url, fn){
+			this.actions[url] = fn;
+		};
+		this.trigger = function(action){
+			for(var i in this.actions) {
+				if(this.urlMatch(i, action)) {
+					this.actions[i].apply(window, arguments);
+				}
+			}
+		};
+		this.urlMatch = function(pattern, action){
+			var pattern = pattern.replace(/:\w+/g, '[^\/]+');
+			var regexp = new RegExp(pattern);
+			return regexp.test(action);
+		};
 	};
 	
 	angular.module("ngApp", ["ngMaterial", "ngRoute", "ngSanitize", "ngMessages", "ngStorage"])
-	.provider("$appSetup", ["$mdThemingProvider", "$routeProvider", "$locationProvider", function $appSetupProvider($mdThemingProvider, $routeProvider, $locationProvider){
+	.factory("httpInterceptor", ["$q", "$rootScope", function($q, $rootScope){
+		var loadingCount = 0;
+		
+		return {
+			request : function(config){
+				if(++loadingCount === 1) $rootScope.$broadcast('loading:progress');
+                return config || $q.when(config);
+			},
+			
+			response : function(response){
+				if(--loadingCount === 0) $rootScope.$broadcast('loading:finish');
+                return response || $q.when(response);
+			},
+			
+			responseError: function (response) {
+				if(response.data.redirect) {
+					document.location.href = response.data.redirect;
+				}
+                if(--loadingCount === 0) $rootScope.$broadcast('loading:finish');
+                return $q.reject(response);
+            }
+		};
+	}])
+	.provider("$appSetup", ["$mdThemingProvider", "$routeProvider", "$locationProvider", "$httpProvider", function $appSetupProvider($mdThemingProvider, $routeProvider, $locationProvider, $httpProvider){
 
+		$httpProvider.interceptors.push('httpInterceptor');
+		
 		this.data = {};
 		
 		this.templates = {
@@ -78,9 +120,14 @@
 			    palette: params.browser ? params.browser : "blue"
 			});
 		};
+		
+		if(this.data.conf.theme) {
+			this.setupTheme(this.data.conf.theme);
+		}
 
 		this.$get = function(){
 			var app = new AppService(this.data, this.templates);
+			app.lock = this.modalAjax;
 			
 			$("script[type='application/dialog']").each(function(){
 				var isModal = $(this).data("modal");
@@ -94,14 +141,18 @@
 							$scope.$storage = $localStorage;
 						else
 							$scope.$storage = $sessionStorage;
-		        		main.apply(window, $app.remap(arguments, main));
+		        		$scope.$on('$locationChangeStart', function() {
+		        			$app.trigger($location.path());
+		        		});
+		        		if(window.main)
+		        			window.main.apply(window, $app.remap(arguments, window.main));
 		        	}
 		        	catch(e) {
 		        		console.log("implement main($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, $interval);", e);
 		        	}
 		        	
 		        };
-		        controller.$inject = app.reinject(main);
+		        controller.$inject = app.reinject(window.main);
 				$routeProvider.when(href, {
 			        template : $(this).text(),
 			        controller : controller,
@@ -115,7 +166,7 @@
 						    		};
 						    		
 						    	}],
-						    	template: '<md-dialog ng-view style="overflow: visible; " md-theme="default" class="popupview"></md-dialog>',
+						    	template: '<md-dialog ng-view></md-dialog>',
 						    	clickOutsideToClose:!isModal,
 						    	href: href
 						    });
@@ -196,13 +247,27 @@
 			}
 		};	
 		
-	}]).factory("popupservice", ["$mdDialog", "$appSetup", "$q", function($mdDialog, $app, $q){
+	}]).factory("popupservice", ["$mdDialog", "$appSetup", "$q", "$rootScope", function($mdDialog, $app, $q, $rootScope){
 		
 		var gu = function(){
 			
 			var dis = this;
 			this.displaying = false;
 			this.bootstrapped = false;
+			
+			if($app.lock) {
+				$rootScope.$on('loading:progress', function (){
+				    $app.queueDialog({
+				    	template: '<md-dialog style="box-shadow:none; overflow:visible; border:none; background-color:transparent; text-align:center;" layout="column"><md-icon md-font-icon="fa-refresh" class="fa rotate md-primary md-hue-1" style="font-size:48px;"></md-icon><span style="padding-top:15px; font-size: 0.6em;">chargement</span></md-dialog>',
+	        	    	clickOutsideToClose:false,
+				    });
+				    dis.show();
+				});
+
+				$rootScope.$on('loading:finish', function (){
+				    $mdDialog.hide();
+				});
+			}
 			
 			this.show = function(){
 				if(!this.bootstrapped)
@@ -226,7 +291,8 @@
 					delete dialogOptions.href;
 					
 					dialogOptions.onRemoving = function(){
-						$app.onDialogRemove(href);
+						if($app.onDialogRemove)
+							$app.onDialogRemove(href);
 					};
 					
 					this.displaying = true;
@@ -406,13 +472,17 @@
 					$scope.$storage = $localStorage;
 				else
 					$scope.$storage = $sessionStorage;
-				main.apply(window, $app.remap(arguments, main));
+				$scope.$on('$locationChangeStart', function() {
+        			$app.trigger($location.path());
+        		});
+				if(window.main)
+					window.main.apply(window, $app.remap(arguments, window.main));
 			}
 			catch(e){
 				console.log("implement main($scope, $mdDialog, $http, $timeout, $app, $routeParams, $location, $compile, $interval)", e);
 			}	
 		};
-		controller.$inject = $app.reinject(main);
+		controller.$inject = $app.reinject(window.main);
 		return {
 			restrict : 'E',
 			transclude : true,
@@ -608,6 +678,9 @@
 		}
 	}]).filter('compact', function(){
 		return function(input){
+			if(input==null)
+				return [];
+			
 			if(!input["@context"]) {
 				angular.forEach(input, function(v, k){
 					angular.forEach(input[k].item.additionalProperty, function(v2, k2){

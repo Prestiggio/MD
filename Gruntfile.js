@@ -9,7 +9,7 @@ module.exports = function(grunt) {
       },
       build: {
         src: grunt.file.readJSON('themejs.json'),
-        dest: '../../../public/vendor/rymd/js/script.min.js'
+        dest: 'src/assets/templates/js/script.min.js'
       }
     },
     cssmin: {
@@ -19,7 +19,7 @@ module.exports = function(grunt) {
 	  },
 	  target: {
 	    files: {
-	      '../../../public/vendor/rymd/css/style.min.css': grunt.file.readJSON('themecss.json')
+	      'src/assets/templates/css/style.min.css': grunt.file.readJSON('themecss.json')
 	    }
 	  }
 	}
