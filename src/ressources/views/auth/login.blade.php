@@ -1,53 +1,43 @@
-<md-content>
-	<form name="frm_login" action="{{ url('/login') }}" novalidate>
-         
-
-                        <div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
-                            <label for="email" class="col-md-4 control-label">E-Mail Address</label>
-
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control" name="email" value="{{ old('email') }}">
-
-                                @if ($errors->has('email'))
-                                    <span class="help-block">
-                                        <strong>{{ $errors->first('email') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
-                            <label for="password" class="col-md-4 control-label">Password</label>
-
-                            <div class="col-md-6">
-                                <input id="password" type="password" class="form-control" name="password">
-
-                                @if ($errors->has('password'))
-                                    <span class="help-block">
-                                        <strong>{{ $errors->first('password') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="col-md-6 col-md-offset-4">
-                                <div class="checkbox">
-                                    <label>
-                                        <input type="checkbox" name="remember"> Remember Me
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="col-md-6 col-md-offset-4">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fa fa-btn fa-sign-in"></i> Login
-                                </button>
-
-                                <a class="btn btn-link" href="{{ url('/password/reset') }}">Forgot Your Password?</a>
-                            </div>
-                        </div>
-                    </form>
+<script type="application/dialog" data-href="/reset-password">
+@include("rymd::auth.email")
+</script>
+<md-content layout="row" layout-align="center center">
+	<form class="md-whiteframe-2dp md-padding" name="frm_login" novalidate flex-lg="33" flex-md="33" ng-submit="login()">
+         <div class="text-center md-headline">@lang("rymd::auth.login")</div>
+         <md-input-container class="md-block">
+         	<label>@lang("rymd::auth.email")</label>
+         	<input type="email" name="email" ng-model="userdata.email" required>
+         	<div ng-messages="frm_login.email.$error">
+         		<div ng-message="email">Veuillez renseigner un email valide</div>
+         		<div ng-message="required">Vous devez renseigner un email</div>
+         		@if ($errors->has('email'))
+	            <div>{{ $errors->first('email') }}</div>
+	            @endif
+         	</div>
+         	
+         </md-input-container>
+         <md-input-container class="md-block">
+         	<label>@lang("rymd::auth.password")</label>
+         	<input type="password" name="password" ng-model="userdata.password" required minlength="4">
+         	<div ng-messages="frm_login.password.$error">
+         		<div ng-message="required">Vous devez renseigner un mot de passe</div>
+         		<div ng-message="minlength">Saisissez au moins 4 caractères</div>
+         		 @if ($errors->has('password'))
+	            <div>{{ $errors->first('password') }}</div>
+	            @endif
+         	</div>
+         </md-input-container>
+         <md-input-container class="md-block">
+         	<md-checkbox ng-model="userdata.remember" aria-label="Checkbox 1">
+	            @lang("rymd::auth.remember")
+	          </md-checkbox>
+         </md-input-container>
+         <div layout="row" layout-align="space-between center">
+         	<md-button type="submit" class="md-raised md-accent">@lang("rymd::auth.login")</md-button>
+			<a href="#!/reset-password">@lang("rymd::auth.forgotten")</a>
+         </div>
+         <div layout="column">
+			<md-button href="/register" class="md-raised md-primary">@lang("rymd::auth.not_yet")</md-button>
+         </div>
+    </form>
 </md-content>
