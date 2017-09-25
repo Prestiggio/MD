@@ -6,7 +6,6 @@
 
 @section("meta")
 <title>Ry Material Design Angular Js</title>
-<meta name="csrf-token" content="{{ csrf_token() }}">
 @stop
 
 @section("basescript")
