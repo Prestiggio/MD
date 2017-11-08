@@ -7,11 +7,6 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
         <title>{{ $title or trans("rymd::overall.welcome") }}</title>
-        @if(count(LaravelLocalization::getSupportedLocales())>1)
-        @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
-            <link rel="alternate" hreflang="{{$localeCode}}" href="{{LaravelLocalization::getLocalizedURL($localeCode) }}" />
-        @endforeach
-        @endif
         <meta name="keywords" content="{{$keywords or trans("rymd::overall.keywords")}}">
         <meta name="description" content="{{ $description or trans("rymd::overall.description") }}">
         <link href="{{Config("app.url")}}" rel="canonical" />
