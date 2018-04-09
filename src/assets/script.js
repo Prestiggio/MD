@@ -55,21 +55,41 @@
 	};
 	
 	angular.module("ngApp", ["ngMaterial", "ngRoute", "ngSanitize", "ngMessages", "ngStorage"])
-	.factory("httpInterceptor", ["$q", "$rootScope", function($q, $rootScope){
+	.factory("httpInterceptor", ["$q", "$rootScope", "$window", function($q, $rootScope, $window){
 		var loadingCount = 0;
 		
 		return {
 			request : function(config){
+				if(config.method && config.method.toLowerCase()=="post") {
+					$window.onbeforeunload = function(){
+						return 'Modifications non sauvegardées. Voulez-vous vraiment quitter cette page ?';
+					};
+					$rootScope.loading = true;
+				}
+				if(config.data && config.data.error)
+					alert(config.data.error);
 				if(++loadingCount === 1) $rootScope.$broadcast('loading:progress');
                 return config || $q.when(config);
 			},
 			
 			response : function(response){
+				if(response.config.method && response.config.method.toLowerCase()=="post") {
+					$window.onbeforeunload = null;
+					$rootScope.loading = false;
+				}
+				if(response.data && response.data.error)
+					alert(response.data.error);
 				if(--loadingCount === 0) $rootScope.$broadcast('loading:finish');
                 return response || $q.when(response);
 			},
 			
 			responseError: function (response) {
+				if(response.config.method && response.config.method.toLowerCase()=="post") {
+					$window.onbeforeunload = null;
+					$rootScope.loading = false;
+				}
+				if(response.data && response.data.error)
+					alert(response.data.error);
 				if(response.data.redirect) {
 					document.location.href = response.data.redirect;
 				}
@@ -513,6 +533,18 @@
         					scope2.menuitems.push(item);
         				});
         				
+        				$("a[role='nav']", element).each(function(k, a){
+        					var item = {
+        							name : $(a).html(),
+        							title : $(a).prop("title"),
+									href : $(a).prop("href"),
+									side : true
+        						};
+        					if(!scope2.firstitem)
+        						scope2.firstitem = item;
+        					scope2.menuitems.push(item);
+        				});
+        				
         				if($app.template["header nav"]) {
         					$templateRequest($app.template["header nav"]).then(function (data) {
                                 var template = angular.element(data);
@@ -532,9 +564,11 @@
         					}
         				});
 
-        				var toplogo = $("header a:first").clone();
-        				toplogo.removeClass("hide-xs");
-        				$("md-sidenav").prepend(toplogo);
+        				if($("header a:first img").length>0) {
+        					var toplogo = $("header a:first").clone();
+            				toplogo.removeClass("hide-xs");
+            				$("md-sidenav").prepend(toplogo);
+        				}
         				
         				$ry.layout(scope2).then(function(){
         					$("script[type='application/popup']").each(function(){
