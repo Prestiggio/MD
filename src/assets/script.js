@@ -523,8 +523,9 @@
                 		scope2.h1 = $("h1").html();
 
         				$("header nav ul li a", element).each(function(k, a){
+							var title = $(a).data("mobtitle");
         					var item = {
-        							name : $(a).html(),
+        							name : title ? title : $(a).html(),
         							title : $(a).prop("title"),
         							href : $(a).prop("href")
         						};
@@ -534,8 +535,9 @@
         				});
         				
         				$("a[role='nav']", element).each(function(k, a){
+							var title = $(a).data("mobtitle");
         					var item = {
-        							name : $(a).html(),
+        							name : title ? title : $(a).html(),
         							title : $(a).prop("title"),
 									href : $(a).prop("href"),
 									side : true
