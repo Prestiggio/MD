@@ -54,7 +54,7 @@
 		};
 	};
 	
-	angular.module("ngApp", ["ngMaterial", "ngRoute", "ngSanitize", "ngMessages", "ngStorage"])
+	angular.module("ngApp", ["ngMaterial", "ngRoute", "ngSanitize", "ngMessages", "ngStorage", "jlareau.bowser"])
 	.factory("httpInterceptor", ["$q", "$rootScope", "$window", function($q, $rootScope, $window){
 		var loadingCount = 0;
 		

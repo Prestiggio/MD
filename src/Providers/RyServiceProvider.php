@@ -48,7 +48,7 @@ class RyServiceProvider extends ServiceProvider
     	
     	$this->app['router']->middleware('recaptcha', '\Ry\Md\Http\Middleware\Recaptcha');
     	
-    	View::share("js", json_encode(["app" => "blank", "captcha" => env("captcha")]));
+		View::share("js", json_encode(["app" => "blank", "captcha" => env("captcha")]));
     }
 
     /**
