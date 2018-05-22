@@ -2,6 +2,7 @@
 namespace Ry\Md\Models;
 
 use Illuminate\Support\Facades\Log;
+use DB;
 
 class Search
 {
@@ -43,7 +44,7 @@ class Search
 							$query->orWhereRaw("soundex_match_all(?, ".$f.", '/') > 0", [strtoupper($a)]);
 						}
 					}
-				})->orderBy("id", "DESC")->select($selections)->get();
+				})->orderBy("id", "DESC")->select($selections)->paginate(10);
 				/*
 				Log::info(call_user_func([$c, "where"], function($query) use ($ar, $fields){
 					foreach ($ar as $a) {
@@ -52,6 +53,35 @@ class Search
 					}
 				})->orderBy("id", "DESC")->toSql());
 				*/
+			}
+		}
+		return $results;
+	}
+
+	public function fulltextsearch($pool, $q, $selections=["*"], $callback=null) {
+		if(!isset($this->pools[$pool])) {
+			return [];
+		}
+		
+		if(strlen($q)<2)
+			return [];
+		
+		$results = [];
+		$entities = $this->pools[$pool];
+		foreach($entities as $c => $fields) {
+			if(count($fields)>0) {
+				$pselect = $selections;
+				$pselect[] = DB::raw("MATCH(".$fields[0].") AGAINST (?) AS relevance");
+				if($callback) {
+					$results[] = $callback(call_user_func([$c, "where"], function($query) use ($fields, $q){
+						$query->orWhereRaw("MATCH(".implode(",",$fields).") AGAINST (?)", [$q, $q]);
+					}))->orderBy("relevance", "DESC")->select($pselect)->paginate(10)->appends(["q" => $q]);
+				}
+				else {
+					$results[] = call_user_func([$c, "where"], function($query) use ($fields, $q){
+						$query->orWhereRaw("MATCH(".implode(",",$fields).") AGAINST (?)", [$q, $q]);
+					})->orderBy("relevance", "DESC")->select($pselect)->paginate(10)->appends(["q" => $q]);
+				}
 			}
 		}
 		return $results;
