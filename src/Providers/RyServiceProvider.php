@@ -17,7 +17,6 @@ class RyServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-    	parent::boot();
     	/*
     	$this->publishes([    			
     			__DIR__.'/../config/rymd.php' => config_path('rymd.php')
